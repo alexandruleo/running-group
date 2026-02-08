@@ -38,7 +38,7 @@ export function EventCard({ event }: EventCardProps) {
                 <div className="flex items-start gap-2">
                   <span className="text-sm mt-0.5">🏃</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {event.distance.split(', ').map((dist, idx) => (
+                    {event.distance.split(', ').map((dist: string, idx: number) => (
                       <span
                         key={idx}
                         className="text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2.5 py-1 rounded-full shadow-sm"

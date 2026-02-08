@@ -70,7 +70,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               <div className="flex items-start gap-2">
                 <span className="text-lg mt-0.5">🏃</span>
                 <div className="flex flex-wrap gap-2">
-                  {event.distance.split(', ').map((dist, idx) => (
+                  {event.distance.split(', ').map((dist: string, idx: number) => (
                     <span
                       key={idx}
                       className="text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-full shadow-md"
