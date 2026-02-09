@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   if (eventType === 'user.created') {
-    const { id, email_addresses, first_name, last_name } = evt.data;
+    const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
     // Get primary email
     const email = email_addresses[0]?.email_address;
@@ -61,19 +61,60 @@ export async function POST(req: Request) {
     try {
       const supabase = createServiceClient();
 
-      // Create runner profile
+      // Create runner profile with Google profile photo
       const { error } = await supabase
         .from('runners')
         .insert({
           clerk_user_id: id,
           email,
           name,
+          avatar_url: image_url || null, // Automatically use Google profile photo
           is_admin: false, // Set manually in Supabase for admin users
         });
 
       if (error) {
         console.error('Error creating runner profile:', error);
         return new Response('Error: Failed to create profile', { status: 500 });
+      }
+
+      return new Response('Webhook processed successfully', { status: 200 });
+    } catch (error) {
+      console.error('Error processing webhook:', error);
+      return new Response('Error: Internal server error', { status: 500 });
+    }
+  }
+
+  if (eventType === 'user.updated') {
+    const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+
+    // Get primary email
+    const email = email_addresses[0]?.email_address;
+
+    if (!email) {
+      return new Response('Error: No email found', { status: 400 });
+    }
+
+    // Create name from first and last name, or use email
+    const name = first_name && last_name
+      ? `${first_name} ${last_name}`
+      : first_name || last_name || email.split('@')[0];
+
+    try {
+      const supabase = createServiceClient();
+
+      // Update runner profile with new data
+      const { error } = await supabase
+        .from('runners')
+        .update({
+          email,
+          name,
+          avatar_url: image_url || null,
+        })
+        .eq('clerk_user_id', id);
+
+      if (error) {
+        console.error('Error updating runner profile:', error);
+        return new Response('Error: Failed to update profile', { status: 500 });
       }
 
       return new Response('Webhook processed successfully', { status: 200 });
