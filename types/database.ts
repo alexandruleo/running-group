@@ -19,6 +19,8 @@ export interface Event {
   distance?: string;
   created_by?: string;
   is_past: boolean;
+  is_recurring?: boolean;
+  recurrence_pattern?: string;
   created_at: string;
   updated_at: string;
 }
@@ -46,4 +48,19 @@ export interface SurveyResponse {
   runner_id: string;
   is_coming: boolean;
   created_at: string;
+}
+
+export interface EventRegistration {
+  id: string;
+  event_id: string;
+  runner_id: string;
+  selected_distance: string; // Legacy - single selection
+  selected_distances?: string[]; // New - multiple selections
+  status: 'registered' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventRegistrationWithRunner extends EventRegistration {
+  runner: Runner;
 }

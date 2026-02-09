@@ -12,28 +12,40 @@ export function LocationAutocomplete({ value, onChange }: LocationAutocompletePr
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Check if Google Maps is loaded
+    // Check if Google Maps is loaded or loading
     if (typeof window !== 'undefined' && (window as any).google?.maps?.places) {
       setIsLoaded(true);
       initAutocomplete();
-    } else {
-      // Load Google Maps script
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
+      return;
+    }
+
+    // Check if script is already in the DOM (loading in progress)
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      // Script is already loading, wait for it
+      const handleLoad = () => {
         setIsLoaded(true);
         initAutocomplete();
       };
-      document.head.appendChild(script);
-
+      existingScript.addEventListener('load', handleLoad);
       return () => {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
+        existingScript.removeEventListener('load', handleLoad);
       };
     }
+
+    // Load Google Maps script (only if not already loaded or loading)
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setIsLoaded(true);
+      initAutocomplete();
+    };
+    document.head.appendChild(script);
+
+    // Don't remove script on cleanup - keep it for other instances
+    return () => {};
   }, []);
 
   const initAutocomplete = () => {

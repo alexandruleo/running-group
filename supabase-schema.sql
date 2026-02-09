@@ -68,6 +68,18 @@ CREATE TABLE IF NOT EXISTS survey_responses (
   UNIQUE(survey_id, runner_id)
 );
 
+-- Event registrations
+CREATE TABLE IF NOT EXISTS event_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID REFERENCES events(id) ON DELETE CASCADE NOT NULL,
+  runner_id UUID REFERENCES runners(id) ON DELETE CASCADE NOT NULL,
+  selected_distance TEXT NOT NULL,
+  status TEXT DEFAULT 'registered' CHECK (status IN ('registered', 'cancelled')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(event_id, runner_id)
+);
+
 -- =====================================================
 -- INDEXES
 -- =====================================================
@@ -78,6 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_events_is_past ON events(is_past);
 CREATE INDEX IF NOT EXISTS idx_event_photos_event_id ON event_photos(event_id);
 CREATE INDEX IF NOT EXISTS idx_surveys_is_active ON surveys(is_active);
 CREATE INDEX IF NOT EXISTS idx_survey_responses_survey_id ON survey_responses(survey_id);
+CREATE INDEX IF NOT EXISTS idx_event_registrations_event_id ON event_registrations(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_registrations_runner_id ON event_registrations(runner_id);
+CREATE INDEX IF NOT EXISTS idx_event_registrations_status ON event_registrations(status);
 
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -89,6 +104,7 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE surveys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE survey_responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_registrations ENABLE ROW LEVEL SECURITY;
 
 -- Runners policies
 -- Anyone authenticated can view runners
@@ -212,6 +228,46 @@ CREATE POLICY "Users can update own responses"
     )
   );
 
+-- Event registrations policies
+-- Anyone can view registrations (public attendee list)
+CREATE POLICY "Anyone can view event registrations"
+  ON event_registrations FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Authenticated users can create registrations
+CREATE POLICY "Users can create registrations"
+  ON event_registrations FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    runner_id IN (
+      SELECT id FROM runners
+      WHERE clerk_user_id = current_setting('request.jwt.claims', true)::json->>'sub'
+    )
+  );
+
+-- Users can update their own registrations
+CREATE POLICY "Users can update own registrations"
+  ON event_registrations FOR UPDATE
+  TO authenticated
+  USING (
+    runner_id IN (
+      SELECT id FROM runners
+      WHERE clerk_user_id = current_setting('request.jwt.claims', true)::json->>'sub'
+    )
+  );
+
+-- Users can delete their own registrations
+CREATE POLICY "Users can delete own registrations"
+  ON event_registrations FOR DELETE
+  TO authenticated
+  USING (
+    runner_id IN (
+      SELECT id FROM runners
+      WHERE clerk_user_id = current_setting('request.jwt.claims', true)::json->>'sub'
+    )
+  );
+
 -- =====================================================
 -- STORAGE BUCKETS
 -- =====================================================
@@ -262,6 +318,9 @@ CREATE TRIGGER update_runners_updated_at BEFORE UPDATE ON runners
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_event_registrations_updated_at BEFORE UPDATE ON event_registrations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================

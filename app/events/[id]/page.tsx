@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { currentUser } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatDateTime } from '@/lib/utils/dates';
 import { EventPhotos } from '@/components/events/EventPhotos';
+import { EventRegistration } from '@/components/events/EventRegistration';
+import { UserPhotoUpload } from '@/components/events/UserPhotoUpload';
 import type { Event, EventPhoto } from '@/types/database';
 
 interface EventDetailPageProps {
@@ -45,6 +48,32 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     .select('*')
     .eq('event_id', id)
     .order('created_at', { ascending: false });
+
+  // Get current runner ID and check registration
+  let currentRunnerId = null;
+  let isUserRegistered = false;
+  if (user) {
+    const serviceClient = createServiceClient();
+    const { data: runner } = await serviceClient
+      .from('runners')
+      .select('id')
+      .eq('clerk_user_id', user.id)
+      .single();
+    currentRunnerId = runner?.id || null;
+
+    // Check if user is registered for this event
+    if (currentRunnerId) {
+      const { data: userReg } = await serviceClient
+        .from('event_registrations')
+        .select('*')
+        .eq('event_id', id)
+        .eq('runner_id', currentRunnerId)
+        .eq('status', 'registered')
+        .single();
+
+      isUserRegistered = !!userReg;
+    }
+  }
 
   return (
     <div className="min-h-screen p-4 pb-24">
@@ -115,11 +144,28 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           )}
         </div>
 
+        {/* Registration Section */}
+        <div className="mb-6">
+          <EventRegistration event={event} currentRunnerId={currentRunnerId} />
+        </div>
+
         {/* Photos Section */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6 border border-white/20">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">📸 Photos</h2>
           <EventPhotos photos={photos || []} />
         </div>
+
+        {/* User Photo Upload */}
+        {user && currentRunnerId && (
+          <div className="mb-6">
+            <UserPhotoUpload
+              eventId={id}
+              runnerId={currentRunnerId}
+              isRegistered={isUserRegistered}
+              eventDate={event.event_date}
+            />
+          </div>
+        )}
 
         {/* Back Button */}
         <Link

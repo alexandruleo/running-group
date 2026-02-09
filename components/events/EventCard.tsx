@@ -21,18 +21,10 @@ export function EventCard({ event }: EventCardProps) {
                 <span>{formatDateTime(event.event_date)}</span>
               </p>
               {event.location && (
-                <div className="text-sm text-gray-700 flex items-center gap-2 font-medium">
+                <p className="text-sm text-gray-700 flex items-center gap-2 font-medium">
                   <span>📍</span>
                   <span>{event.location}</span>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-700 ml-1"
-                  >
-                    🗺️
-                  </a>
-                </div>
+                </p>
               )}
               {event.distance && (
                 <div className="flex items-start gap-2">
