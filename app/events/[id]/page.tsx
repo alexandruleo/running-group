@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatDateTime } from '@/lib/utils/dates';
@@ -13,6 +14,7 @@ interface EventDetailPageProps {
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { id } = await params;
+  const user = await currentUser();
   const supabase = await createClient();
 
   // Fetch event
@@ -24,6 +26,17 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
   if (eventError || !event) {
     notFound();
+  }
+
+  // Check if user is admin
+  let isAdmin = false;
+  if (user) {
+    const { data: runner } = await supabase
+      .from('runners')
+      .select('is_admin')
+      .eq('clerk_user_id', user.id)
+      .single();
+    isAdmin = runner?.is_admin || false;
   }
 
   // Fetch photos
@@ -40,11 +53,21 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6 border border-white/20">
           <div className="flex items-start justify-between mb-4">
             <h1 className="text-3xl font-extrabold text-gray-900">{event.title}</h1>
-            {event.is_past && (
-              <span className="text-sm bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold">
-                Past Event
-              </span>
-            )}
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Link
+                  href={`/events/${event.id}/edit`}
+                  className="text-sm bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-bold"
+                >
+                  ✏️ Edit
+                </Link>
+              )}
+              {event.is_past && (
+                <span className="text-sm bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold">
+                  Past Event
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 mb-4">
