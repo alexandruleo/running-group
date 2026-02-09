@@ -1,7 +1,7 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function POST(req: Request) {
   // Get the headers
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       : first_name || last_name || email.split('@')[0];
 
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
 
       // Create runner profile
       const { error } = await supabase
