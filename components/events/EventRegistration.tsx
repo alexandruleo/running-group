@@ -225,38 +225,38 @@ export function EventRegistration({ event, currentRunnerId }: EventRegistrationP
         ) : userRegistration ? (
           <div className="space-y-3">
             <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3">
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-green-800">✅ You're registered!</p>
+                  <p className="text-sm font-semibold text-green-800 mb-2">✅ You're registered!</p>
                   {isRecurring && userRegistration.selected_distances ? (
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {userRegistration.selected_distances.map((dist: string) => (
                         <span
                           key={dist}
-                          className="inline-block text-sm font-bold bg-white text-green-700 px-3 py-1 rounded-full shadow-sm border border-green-200"
+                          className="inline-block text-sm font-bold bg-white text-green-700 px-3 py-1.5 rounded-full shadow-sm border border-green-200"
                         >
                           {dist}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-lg font-bold text-green-900 mt-1">
+                    <p className="text-lg font-bold text-green-900">
                       {userRegistration.selected_distance}
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={openDistanceModal}
                     disabled={isSubmitting}
-                    className="px-4 py-2 bg-white text-green-700 rounded-lg font-semibold text-sm hover:bg-green-50 transition-all shadow-sm disabled:opacity-50 whitespace-nowrap"
+                    className="flex-1 px-4 py-2.5 bg-white text-green-700 rounded-lg font-semibold text-sm hover:bg-green-50 transition-all shadow-sm disabled:opacity-50"
                   >
                     {isRecurring ? 'Change Options' : 'Change Distance'}
                   </button>
                   <button
                     onClick={handleUnregister}
                     disabled={isSubmitting}
-                    className="px-4 py-2 bg-white text-red-600 rounded-lg font-semibold text-sm hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-white text-red-600 rounded-lg font-semibold text-sm hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
                   >
                     Cancel
                   </button>
