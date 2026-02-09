@@ -37,6 +37,11 @@ export async function POST(
       .single();
 
     if (runnerError || !runner) {
+      console.error('Runner lookup failed:', {
+        clerk_user_id: user.id,
+        error: runnerError,
+        runner: runner,
+      });
       return NextResponse.json({ error: 'Runner not found' }, { status: 404 });
     }
 
